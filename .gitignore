@@ -1,6 +1,7 @@
 # Ignore binaries inside the service folders
 broker-service/brokerApp
 authentication-service/authApp
+front-end/front-end/frontApp
 
 # Ignore database volumes and local secrets
 project/db-data/
