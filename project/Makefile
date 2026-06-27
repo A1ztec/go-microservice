@@ -1,0 +1,57 @@
+SHELL=/bin/bash
+FRONT_END_BINARY=frontApp
+BROKER_BINARY=brokerApp
+AUTH_BINARY=authApp
+
+## up: starts all containers in the background without forcing build
+up:
+	@echo "Starting Docker images..."
+	docker compose up -d
+	@echo "Docker images started!"
+
+## up_build: stops docker-compose (if running), builds all projects and starts docker compose
+up_build: build_broker build_auth
+	docker compose down
+	@echo "Building (when required) and starting docker images..."
+	docker compose up --build -d
+	@echo "Docker images built and started!"
+
+## down: stop docker compose
+down:
+	@echo "Stopping docker compose..."
+	docker compose down
+	@echo "Done!"
+
+## build_broker: builds the broker binary as a linux executable
+build_broker:
+	@echo "Building broker binary..."
+	cd ../broker-service && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${BROKER_BINARY} ./cmd/api
+	@echo "Done!"
+
+build_broker:
+	@echo "Building broker binary..."
+	cd ../broker-service && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${BROKER_BINARY} ./cmd/api
+	@echo "Done!"
+
+## build_auth: builds the authentication binary as a linux executable
+build_auth:
+	@echo "Building authentication binary..."
+	cd ../authentication-service && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${AUTH_BINARY} ./cmd/api
+	@echo "Done!"
+
+## build_front: builds the front end binary as a linux executable
+build_front:
+	@echo "Building front end binary..."
+	cd ../front-end/front-end && CGO_ENABLED=0 GOOS=linux go build -o ${FRONT_END_BINARY} ./cmd/web
+	@echo "Done!"
+
+## start: starts the front end in the background
+start: build_front
+	@echo "Starting front end..."
+	cd ../front-end/front-end && ./${FRONT_END_BINARY} &
+
+## stop: stop the front end
+stop:
+	@echo "Stopping front end..."
+	-pkill -f "${FRONT_END_BINARY}"
+	@echo "Stopped front end!"

@@ -1,0 +1,9 @@
+# Ignore binaries inside the service folders
+broker-service/brokerApp
+authentication-service/authApp
+
+# Ignore database volumes and local secrets
+project/db-data/
+*.env
+
+workspace.code-workspace
