@@ -21,5 +21,6 @@ func (app *Config) routes() http.Handler {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	mux.Use(middleware.Heartbeat("/ping"))
+	mux.Post("/authenticate", app.Authenticate)
 	return mux
 }
