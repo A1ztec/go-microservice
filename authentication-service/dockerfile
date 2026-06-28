@@ -1,7 +1,11 @@
 FROM alpine:latest
 
-RUN mkdir /app
+# FIX: Set the working directory first
+WORKDIR /app
 
-COPY authApp /app
+# Now everything copies directly into /app automatically
+COPY authApp .
+COPY .env .
 
-CMD ["/app/authApp"]
+# Since WORKDIR is /app, this executes inside /app where .env lives
+CMD ["./authApp"]
