@@ -9,10 +9,13 @@ import (
 const portNumber = "80"
 
 type Config struct {
+	Client *http.Client
 }
 
 func main() {
-	app := Config{}
+	app := Config{
+		Client: &http.Client{},
+	}
 	log.Printf("starting broker service on port %s\n", portNumber)
 
 	// define a http server and set the handler

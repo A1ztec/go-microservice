@@ -28,11 +28,6 @@ build_broker:
 	cd ../broker-service && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${BROKER_BINARY} ./cmd/api
 	@echo "Done!"
 
-build_broker:
-	@echo "Building broker binary..."
-	cd ../broker-service && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${BROKER_BINARY} ./cmd/api
-	@echo "Done!"
-
 ## build_auth: builds the authentication binary as a linux executable
 build_auth:
 	@echo "Building authentication binary..."

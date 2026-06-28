@@ -17,7 +17,7 @@ func (app *Config) readJson(w http.ResponseWriter, r *http.Request, data any) er
 	maxBytes := 1048576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&data)
+	err := dec.Decode(data)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (app *Config) readJson(w http.ResponseWriter, r *http.Request, data any) er
 	return nil
 }
 
-func (app *Config) wtiteJson(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
+func (app *Config) writeJson(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
 	out, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -56,5 +56,5 @@ func (app *Config) errorJson(w http.ResponseWriter, err error, status ...int) er
 		Error:   true,
 		Message: err.Error(),
 	}
-	return app.wtiteJson(w, statusCode, payload)
+	return app.writeJson(w, statusCode, payload)
 }
