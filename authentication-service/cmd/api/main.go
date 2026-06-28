@@ -28,7 +28,6 @@ func main() {
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
-
 	fmt.Println("starting authentication service...")
 
 	//Todo Connect to database
@@ -45,7 +44,7 @@ func main() {
 
 	//Todo start web server
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("Port_number")),
+		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT_NUMBER")),
 		Handler: app.routes(),
 	}
 
