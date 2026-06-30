@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
@@ -34,10 +38,47 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		app.errorJson(w, errors.New("invalid credentials"), http.StatusUnauthorized)
 		return
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	go func() {
+		defer cancel()
+		err := app.logRequest(ctx, "authentication", fmt.Sprintf("Logged in user %s", user.Email))
+		if err != nil {
+			log.Printf("Error logging request: %v", err)
+		}
+	}()
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", user.Email),
 		Data:    user,
 	}
 	app.writeJson(w, http.StatusOK, payload)
+}
+
+func (app *Config) logRequest(ctx context.Context, name, data string) error {
+
+	var entry struct {
+		Name string `json:"name"`
+		Data string `json:"data"`
+	}
+	entry.Name = name
+	entry.Data = data
+
+	jsonData, err := json.MarshalIndent(entry, "", "\t")
+	if err != nil {
+		log.Printf("Error marshalling log entry: %v", err)
+		return err
+	}
+	logServiceUrl := "http://logger-service/log"
+	request, err := http.NewRequestWithContext(ctx, "POST", logServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Error creating new request: %v", err)
+		return err
+	}
+	_, err = app.Client.Do(request)
+	if err != nil {
+		log.Println("error in sending the request to the logger microservice", err)
+		return err
+	}
+	return nil
 }
