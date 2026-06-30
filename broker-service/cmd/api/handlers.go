@@ -11,11 +11,17 @@ import (
 type requestPayload struct {
 	Action string      `json:"action"`
 	Auth   AuthPayload `json:"auth,omitempty"`
+	Log    LogPayload  `json:"log,omitempty"`
 }
 
 type AuthPayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type LogPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +44,9 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	switch requestPayload.Action {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
+	case "log":
+		app.logItem(w, requestPayload.Log)
+		log.Printf("this is the log data: %v", requestPayload.Log)
 	default:
 		app.errorJson(w, errors.New("Invalid Action"), http.StatusBadRequest)
 	}
@@ -91,4 +100,60 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 		Data:    jsonFromService.Data,
 	}
 	app.writeJson(w, http.StatusOK, payload)
+}
+
+func (app *Config) logItem(w http.ResponseWriter, l LogPayload) {
+	// get the body and encode it
+	jsonData, err := json.MarshalIndent(l, "", "\t")
+	if err != nil {
+		log.Printf("Error marshalling request body: %v", err)
+		app.errorJson(w, err, http.StatusInternalServerError)
+		return
+	}
+	logServiceUrl := "http://logger-service/log"
+	request, err := http.NewRequest("POST", logServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Error creating new request: %v", err)
+		app.errorJson(w, err, http.StatusInternalServerError)
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+	res, err := app.Client.Do(request)
+	if err != nil {
+		log.Println("error in sending the request to the logger microservice", err)
+		app.errorJson(w, err, http.StatusInternalServerError)
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Logger service responded with status code: %d", res.StatusCode)
+		app.errorJson(w, errors.New("Error calling logger service"), http.StatusInternalServerError)
+		return
+	}
+
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(res.Body).Decode(&jsonFromService)
+	if err != nil {
+		log.Printf("Error decoding response from logger service: %v", err)
+		app.errorJson(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	if jsonFromService.Error {
+		log.Printf("Logger service returned an error: %s", jsonFromService.Message)
+		app.errorJson(w, errors.New(jsonFromService.Message), http.StatusInternalServerError)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "Logged",
+	}
+	err = app.writeJson(w, http.StatusOK, payload)
+	if err != nil {
+		log.Printf("Error writing JSON response: %v", err)
+		app.errorJson(w, err, http.StatusInternalServerError)
+		return
+	}
 }
