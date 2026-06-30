@@ -33,6 +33,18 @@ services:
       - postgres
     networks:
       - go-micro-network
+  logger-service:
+    build:
+      context: ./../logger-service
+      dockerfile: logger-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - mongo
+    networks:
+      - go-micro-network
 
 
   postgres:
@@ -50,6 +62,22 @@ services:
       - ./db-data/postgres/:/var/lib/postgresql/data/
     networks:
       - go-micro-network
+    
+  mongo:
+      image: mongo:4.2.16-bionic
+      ports:
+        - "27017:27017"
+      deploy:
+        mode: replicated
+        replicas: 1
+      environment:
+        MONGO_INITDB_DATABASE: logs
+        MONGO_INITDB_ROOT_USERNAME: admin
+        MONGO_INITDB_ROOT_PASSWORD: password
+      networks:
+        - go-micro-network
+      volumes:
+        - ./db-data/mongo/:/data/db/
     
 
 networks:

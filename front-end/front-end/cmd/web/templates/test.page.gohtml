@@ -8,6 +8,7 @@
                 <hr>
                 <a id="brokerBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Broker</a>
                 <a id="authbrokerBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Auth</a>
+                <a id="logBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test log</a>
 
                 <div id="output" class="mt-5" style="outline: 1px solid silver; padding: 2em;">
                     <span class="text-muted">Output shows here...</span>
@@ -35,14 +36,46 @@
     <script>
     let brokerBtn = document.getElementById("brokerBtn");
     let authbrokerBtn = document.getElementById("authbrokerBtn");
+    let logBtn = document.getElementById("logBtn");
     let output = document.getElementById("output");
     let sent = document.getElementById("payload");
-    // FIX: Fixed spelling here to match later usage
     let received = document.getElementById("received"); 
 
-    authbrokerBtn.addEventListener("click", function() {
+    logBtn.addEventListener("click" , function(){
+        const payload = {
+            action: "log",
+            log: {
+                "name": "event",
+                "data" : "some kind of data"
+            }
+        };
 
-        // FIX: Added missing commas here
+        const headers = new Headers();
+        headers.append("Content-Type" , "application/json");
+
+        const body = {
+            method : "POST",
+            body : JSON.stringify(payload),
+            headers : headers,
+        };
+        
+        fetch("http://localhost:8080/handle", body)
+        .then((response) => response.json())
+        .then((data) => {
+            sent.innerHTML = JSON.stringify(payload , undefined , 4);
+            received.innerHTML = JSON.stringify(data, undefined, 4);
+            if (data.error) {
+                output.innerHTML += `<br><strong>error</strong> ${data.message}`;
+            } else {
+                output.innerHTML += `<br><strong>Response from broker service</strong>: ${data.message}`;
+            }
+        })
+        .catch((error) => {
+            output.innerHTML += "<br><br>Error: " + error;
+        });
+    })
+
+    authbrokerBtn.addEventListener("click", function() {
         const payload = {
             action : "auth",
             auth : {
@@ -51,22 +84,18 @@
             }
         };
 
-        // FIX: Capitalized Headers
         const headers = new Headers();
         headers.append("Content-Type" , "application/json");
 
         const body = {
             method : "POST",
-            // FIX: Capitalized JSON
             body : JSON.stringify(payload),
             headers : headers,
         };
 
-        // FIX: Removed unnecessary backslashes from URL
         fetch("http://localhost:8080/handle", body)
         .then((response) => response.json())
         .then((data) => {
-            // FIX: Capitalized JSON
             sent.innerHTML = JSON.stringify(payload , undefined , 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
             if (data.error) {
@@ -81,12 +110,10 @@
     });
 
     brokerBtn.addEventListener("click", function() {
-
         const body = {
             method: 'POST',
         };
 
-        // FIX: Removed unnecessary backslashes from URL
         fetch("http://localhost:8080/broker", body)
         .then((response) => response.json())
         .then((data) => {
@@ -102,6 +129,5 @@
             output.innerHTML += "<br><br>Error: " + error;
         });
     });
-        
     </script>
 {{end}}
